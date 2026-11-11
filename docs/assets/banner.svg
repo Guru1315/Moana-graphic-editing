@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-labelledby="t d">
+  <title id="t">Moana — The Ocean Is Calling</title>
+  <desc id="d">Animated banner: an extruded 3D title tilting over a dusk sky and layered ocean waves, with the live site address moana-graphic-editing.vercel.app</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#020e1a"/><stop offset=".5" stop-color="#1b2445"/>
+      <stop offset=".78" stop-color="#7a3f5e"/><stop offset="1" stop-color="#f08a5d"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffd9a0" stop-opacity=".95"/><stop offset=".35" stop-color="#ff9d6c" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ff9d6c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#bff5ea"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1200" height="420" rx="22"/></clipPath>
+    <clipPath id="titleClip"><text x="600" y="212" class="title">MOANA</text></clipPath>
+  </defs>
+  <style>
+    .title, .layer { font: 900 132px Georgia, 'Times New Roman', serif; letter-spacing: 18px; text-anchor: middle; }
+    /* Each depth layer slides further than the one in front of it, so the block appears to turn */
+    .layer { animation: extrude 7s ease-in-out infinite alternate; }
+    @keyframes extrude {
+      from { transform: translate(calc(var(--i) * -1.5px), calc(var(--i) * 1.1px)); }
+      to   { transform: translate(calc(var(--i) *  1.5px), calc(var(--i) * 1.1px)); }
+    }
+    .tilt { transform-origin: 600px 190px; animation: tilt 7s ease-in-out infinite alternate; }
+    @keyframes tilt {
+      from { transform: skewY(-1.6deg) scaleX(.965) translateX(10px); }
+      to   { transform: skewY( 1.6deg) scaleX(.965) translateX(-10px); }
+    }
+    .shine { animation: shine 7s ease-in-out infinite alternate; }
+    @keyframes shine { from { transform: translateX(-420px); } to { transform: translateX(420px); } }
+    .bob { animation: bob 5s ease-in-out infinite alternate; }
+    @keyframes bob { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
+    .star { fill: #fff; animation: twinkle 4s ease-in-out infinite alternate; }
+    @keyframes twinkle { from { opacity: .15; } to { opacity: .95; } }
+    .w1 { animation: slide1 16s linear infinite; }
+    .w2 { animation: slide2 11s linear infinite; }
+    .w3 { animation: slide3 7s linear infinite; }
+    @keyframes slide1 { to { transform: translateX(-520px); } }
+    @keyframes slide2 { to { transform: translateX(380px); } }
+    @keyframes slide3 { to { transform: translateX(-300px); } }
+    .sun { animation: glow 6s ease-in-out infinite alternate; transform-origin: 600px 318px; }
+    @keyframes glow { from { transform: scale(.94); opacity: .8; } to { transform: scale(1.06); opacity: 1; } }
+    .kicker { font: 700 15px ui-monospace, 'SF Mono', Consolas, monospace; letter-spacing: 9px; fill: #00d4aa; text-anchor: middle; }
+    .sub { font: 400 19px Georgia, serif; fill: #fff; fill-opacity: .82; text-anchor: middle; }
+    .url { font: 700 17px ui-monospace, 'SF Mono', Consolas, monospace; letter-spacing: 1px; fill: #020e1a; text-anchor: middle; }
+    .pulse { animation: pulse 2.4s ease-in-out infinite; transform-origin: 600px 366px; }
+    @keyframes pulse { 50% { transform: scale(1.035); } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="420" fill="url(#sky)"/>
+    <circle class="star" cx="683" cy="52" r="1.8" style="animation-delay:-2.60s"/><circle class="star" cx="168" cy="151" r="1" style="animation-delay:-1.46s"/><circle class="star" cx="138" cy="143" r="1" style="animation-delay:-0.15s"/><circle class="star" cx="908" cy="121" r="1" style="animation-delay:-0.96s"/><circle class="star" cx="1148" cy="122" r="1" style="animation-delay:-3.31s"/><circle class="star" cx="273" cy="71" r="1" style="animation-delay:-2.31s"/><circle class="star" cx="832" cy="26" r="1" style="animation-delay:-0.19s"/><circle class="star" cx="292" cy="88" r="1.8" style="animation-delay:-0.58s"/><circle class="star" cx="261" cy="160" r="1.4" style="animation-delay:-2.24s"/><circle class="star" cx="390" cy="40" r="1" style="animation-delay:-1.49s"/><circle class="star" cx="1141" cy="30" r="1" style="animation-delay:-2.48s"/><circle class="star" cx="1036" cy="188" r="1.8" style="animation-delay:-3.11s"/><circle class="star" cx="973" cy="163" r="1.8" style="animation-delay:-1.45s"/><circle class="star" cx="528" cy="60" r="1" style="animation-delay:-0.33s"/><circle class="star" cx="634" cy="148" r="1.8" style="animation-delay:-3.50s"/><circle class="star" cx="939" cy="87" r="1" style="animation-delay:-0.47s"/><circle class="star" cx="876" cy="56" r="1.4" style="animation-delay:-0.61s"/><circle class="star" cx="1021" cy="121" r="1" style="animation-delay:-3.85s"/><circle class="star" cx="178" cy="156" r="1.4" style="animation-delay:-1.36s"/><circle class="star" cx="737" cy="166" r="1.8" style="animation-delay:-2.32s"/><circle class="star" cx="954" cy="31" r="1" style="animation-delay:-3.78s"/><circle class="star" cx="990" cy="184" r="1" style="animation-delay:-0.24s"/><circle class="star" cx="654" cy="179" r="1.8" style="animation-delay:-1.14s"/><circle class="star" cx="810" cy="185" r="1.4" style="animation-delay:-0.09s"/><circle class="star" cx="965" cy="104" r="1" style="animation-delay:-2.44s"/><circle class="star" cx="1031" cy="29" r="1" style="animation-delay:-3.07s"/><circle class="star" cx="284" cy="77" r="1.8" style="animation-delay:-1.56s"/><circle class="star" cx="1036" cy="34" r="1" style="animation-delay:-1.80s"/><circle class="star" cx="1145" cy="85" r="1" style="animation-delay:-3.28s"/><circle class="star" cx="1146" cy="85" r="1.8" style="animation-delay:-3.95s"/><circle class="star" cx="799" cy="73" r="1" style="animation-delay:-0.33s"/><circle class="star" cx="329" cy="73" r="1" style="animation-delay:-0.05s"/><circle class="star" cx="393" cy="81" r="1.4" style="animation-delay:-0.02s"/><circle class="star" cx="878" cy="150" r="1.4" style="animation-delay:-2.44s"/><circle class="star" cx="672" cy="46" r="1" style="animation-delay:-1.83s"/><circle class="star" cx="1165" cy="114" r="1.8" style="animation-delay:-1.60s"/><circle class="star" cx="232" cy="137" r="1.8" style="animation-delay:-0.25s"/><circle class="star" cx="157" cy="67" r="1.8" style="animation-delay:-0.65s"/><circle class="star" cx="716" cy="167" r="1" style="animation-delay:-0.41s"/><circle class="star" cx="1180" cy="52" r="1" style="animation-delay:-3.80s"/><circle class="star" cx="72" cy="32" r="1" style="animation-delay:-2.46s"/><circle class="star" cx="324" cy="176" r="1.4" style="animation-delay:-3.82s"/><circle class="star" cx="765" cy="135" r="1" style="animation-delay:-0.46s"/><circle class="star" cx="1019" cy="133" r="1.8" style="animation-delay:-1.94s"/><circle class="star" cx="195" cy="50" r="1" style="animation-delay:-3.00s"/><circle class="star" cx="562" cy="136" r="1" style="animation-delay:-2.07s"/>
+    <circle class="sun" cx="600" cy="318" r="230" fill="url(#sun)"/>
+    <path class="w1" d="M-520,420 L-520,292 Q-390.0,301.0 -260.0,292 Q-130.0,283.0 0.0,292 Q130.0,301.0 260.0,292 Q390.0,283.0 520.0,292 Q650.0,301.0 780.0,292 Q910.0,283.0 1040.0,292 Q1170.0,301.0 1300.0,292 Q1430.0,283.0 1560.0,292 Q1690.0,301.0 1820.0,292 Q1950.0,283.0 2080.0,292 L1720,420 Z" fill="#12506a" fill-opacity=".75"/>
+    <path class="w2" d="M-380,420 L-380,312 Q-285.0,323.0 -190.0,312 Q-95.0,301.0 0.0,312 Q95.0,323.0 190.0,312 Q285.0,301.0 380.0,312 Q475.0,323.0 570.0,312 Q665.0,301.0 760.0,312 Q855.0,323.0 950.0,312 Q1045.0,301.0 1140.0,312 Q1235.0,323.0 1330.0,312 Q1425.0,301.0 1520.0,312 Q1615.0,323.0 1710.0,312 Q1805.0,301.0 1900.0,312 L1580,420 Z" fill="#0b3a55" fill-opacity=".85"/>
+    <g class="bob"><g class="tilt">
+      <text class="kicker" x="600" y="78">INTERACTIVE · FAN-MADE · 3D HERO</text>
+      <text class="layer" style="--i:12" x="600" y="212" fill="rgb(24,70,66)">MOANA</text><text class="layer" style="--i:11" x="600" y="212" fill="rgb(22,79,74)">MOANA</text><text class="layer" style="--i:10" x="600" y="212" fill="rgb(20,88,82)">MOANA</text><text class="layer" style="--i:9" x="600" y="212" fill="rgb(18,97,90)">MOANA</text><text class="layer" style="--i:8" x="600" y="212" fill="rgb(16,106,98)">MOANA</text><text class="layer" style="--i:7" x="600" y="212" fill="rgb(14,115,106)">MOANA</text><text class="layer" style="--i:6" x="600" y="212" fill="rgb(12,124,114)">MOANA</text><text class="layer" style="--i:5" x="600" y="212" fill="rgb(10,133,122)">MOANA</text><text class="layer" style="--i:4" x="600" y="212" fill="rgb(8,142,130)">MOANA</text><text class="layer" style="--i:3" x="600" y="212" fill="rgb(6,151,138)">MOANA</text><text class="layer" style="--i:2" x="600" y="212" fill="rgb(4,160,146)">MOANA</text><text class="layer" style="--i:1" x="600" y="212" fill="rgb(2,169,154)">MOANA</text>
+      <text class="title" x="600" y="212" fill="url(#face)">MOANA</text>
+      <g clip-path="url(#titleClip)"><rect class="shine" x="520" y="100" width="160" height="130" fill="url(#shine)"/></g>
+      <text class="sub" x="600" y="262">The ocean is calling — turn the hero with your mouse or finger</text>
+    </g></g>
+    <path class="w3" d="M-300,420 L-300,342 Q-225.0,355.0 -150.0,342 Q-75.0,329.0 0.0,342 Q75.0,355.0 150.0,342 Q225.0,329.0 300.0,342 Q375.0,355.0 450.0,342 Q525.0,329.0 600.0,342 Q675.0,355.0 750.0,342 Q825.0,329.0 900.0,342 Q975.0,355.0 1050.0,342 Q1125.0,329.0 1200.0,342 Q1275.0,355.0 1350.0,342 Q1425.0,329.0 1500.0,342 Q1575.0,355.0 1650.0,342 Q1725.0,329.0 1800.0,342 L1500,420 Z" fill="#041c2e"/>
+    <g class="pulse">
+      <rect x="402" y="343" width="396" height="46" rx="23" fill="#00d4aa"/>
+      <text class="url" x="600" y="372">▶ moana-graphic-editing.vercel.app</text>
+    </g>
+  </g>
+</svg>
