@@ -61,9 +61,21 @@ export default function Hero() {
     resize();
     window.addEventListener('resize', resize);
 
-    function draw(i: number) {
+    // Function declaration (hoisted): resize() above calls draw() before this line runs
+    function loaded(i: number) {
       const img = images.current[i];
-      if (!img || !img.complete || img.naturalWidth === 0) return;
+      return !!img && img.complete && img.naturalWidth > 0;
+    }
+
+    // Draw frame i, or the closest frame that has finished loading
+    function draw(i: number) {
+      let pick = -1;
+      for (let d = 0; d < FRAME_COUNT && pick < 0; d++) {
+        if (i - d >= 0 && loaded(i - d)) pick = i - d;
+        else if (i + d < FRAME_COUNT && loaded(i + d)) pick = i + d;
+      }
+      if (pick < 0) return;
+      const img = images.current[pick]!;
       const { naturalWidth: iw, naturalHeight: ih } = img;
       const cw = canvas!.width, ch = canvas!.height;
       const s  = Math.max(cw / iw, ch / ih);
@@ -71,21 +83,34 @@ export default function Hero() {
       ctx!.drawImage(img, (cw - iw * s) / 2, (ch - ih * s) / 2, iw * s, ih * s);
     }
 
+    // Load the middle frame first, then work outwards, a few at a time, so the hero
+    // appears straight away instead of waiting behind 181 parallel requests.
+    // Phones and slow or data-saving connections fetch every second frame; draw()
+    // falls back to the nearest loaded neighbour for the ones that are skipped.
     images.current = new Array(FRAME_COUNT).fill(null);
-    let ready = false;
-    let interacted = false; // set once the pointer or a touch drag picks a frame
-    for (let i = 0; i < FRAME_COUNT; i++) {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const lite =
+      !!conn?.saveData || /(^|-)[23]g$/.test(conn?.effectiveType ?? '') ||
+      (window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 768);
+    const queue = Array.from({ length: FRAME_COUNT }, (_, i) => i)
+      .filter(i => !lite || (i - MIDDLE) % 2 === 0)
+      .sort((x, y) => Math.abs(x - MIDDLE) - Math.abs(y - MIDDLE));
+    let cancelled = false;
+    const loadNext = () => {
+      const i = queue.shift();
+      if (cancelled || i === undefined) return;
       const img = new Image();
-      img.src = `/${FOLDER}/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
       img.onload = () => {
         images.current[i] = img;
-        // Show the first frame that arrives, then settle on the middle frame (facing the
-        // viewer) so a drag can go either way, unless the user has already chosen one.
-        if (!ready) { ready = true; frameRef.current = i; draw(i); }
-        if (i === MIDDLE && !interacted) frameRef.current = MIDDLE;
-        if (i === frameRef.current) draw(i);
+        if (cancelled) return;
+        draw(frameRef.current); // a closer frame may now be available
+        loadNext();
       };
-    }
+      img.onerror = loadNext;
+      img.src = `/${FOLDER}/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
+    };
+    loadNext();                                   // middle frame on its own first
+    for (let n = 0; n < 5; n++) setTimeout(loadNext, 0); // then six in parallel
 
     // Window-level listener so nav/overlay elements never block events
     const onMove = (e: MouseEvent) => {
@@ -94,7 +119,6 @@ export default function Hero() {
       if (e.clientY < r.top || e.clientY > r.bottom) return;
       const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
       const idx   = Math.round(ratio * (FRAME_COUNT - 1));
-      interacted = true;
       if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
     };
     window.addEventListener('mousemove', onMove);
@@ -118,7 +142,6 @@ export default function Hero() {
         touch.scrub = Math.abs(dx) > Math.abs(dy);
       }
       if (!touch.scrub) return;
-      interacted = true;
       // One swipe across the full width covers the whole sequence
       const step = (dx / section.clientWidth) * (FRAME_COUNT - 1);
       const idx  = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(touch.frame + step)));
@@ -147,6 +170,7 @@ export default function Hero() {
       .fromTo(bottomRef.current,  { opacity: 0, y: 18  }, { opacity: 1, y: 0, duration: 0.75, ease: 'power3.out' }, '-=0.55');
 
     return () => {
+      cancelled = true;
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('touchstart', onTouchStart);
