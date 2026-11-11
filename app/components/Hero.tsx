@@ -17,6 +17,9 @@ const SOCIAL = [
   { s: 'FB', name: 'Facebook',  href: 'https://www.facebook.com/hashtag/moana' },
 ];
 
+// Official trailer on the Walt Disney Animation Studios YouTube channel, embedded (not re-hosted)
+const TRAILER_ID = 'LKFuXETZUsI';
+
 const goTo = (label: string) =>
   document.getElementById(label.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
 
@@ -28,16 +31,18 @@ export default function Hero() {
   const navRef     = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const bottomRef  = useRef<HTMLDivElement>(null);
-  const playRef    = useRef<() => void>(() => {});
   const [active, setActive] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    if (!menuOpen && !trailerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); setTrailerOpen(false); }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [menuOpen]);
+  }, [menuOpen, trailerOpen]);
 
   useEffect(() => {
     const canvas  = canvasRef.current;
@@ -68,7 +73,7 @@ export default function Hero() {
 
     images.current = new Array(FRAME_COUNT).fill(null);
     let ready = false;
-    let interacted = false; // set once the pointer, a touch drag or the trailer picks a frame
+    let interacted = false; // set once the pointer or a touch drag picks a frame
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.src = `/${FOLDER}/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
@@ -83,9 +88,8 @@ export default function Hero() {
     }
 
     // Window-level listener so nav/overlay elements never block events
-    let playing: gsap.core.Tween | null = null;
     const onMove = (e: MouseEvent) => {
-      if (!section || playing) return;
+      if (!section) return;
       const r = section.getBoundingClientRect();
       if (e.clientY < r.top || e.clientY > r.bottom) return;
       const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
@@ -100,13 +104,13 @@ export default function Hero() {
     let touch: { x: number; y: number; frame: number; scrub: boolean | null } | null = null;
     const onTouchStart = (e: TouchEvent) => {
       const t = e.touches[0];
-      if (!section || playing || e.touches.length !== 1) { touch = null; return; }
+      if (!section || e.touches.length !== 1) { touch = null; return; }
       const r = section.getBoundingClientRect();
       if (t.clientY < r.top || t.clientY > r.bottom) { touch = null; return; }
       touch = { x: t.clientX, y: t.clientY, frame: frameRef.current, scrub: null };
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (!touch || !section || playing) return;
+      if (!touch || !section) return;
       const t  = e.touches[0];
       const dx = t.clientX - touch.x, dy = t.clientY - touch.y;
       if (touch.scrub === null) {
@@ -125,21 +129,6 @@ export default function Hero() {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd);
     window.addEventListener('touchcancel', onTouchEnd);
-
-    // "Trailer": play the whole frame sequence once, then hand control back to the mouse
-    playRef.current = () => {
-      playing?.kill();
-      interacted = true;
-      const state = { f: 0 };
-      playing = gsap.to(state, {
-        f: FRAME_COUNT - 1, duration: FRAME_COUNT / 30, ease: 'none',
-        onUpdate: () => {
-          const idx = Math.round(state.f);
-          if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
-        },
-        onComplete: () => { playing = null; },
-      });
-    };
 
     // Highlight the nav item for whichever section crosses the middle of the viewport
     const io = new IntersectionObserver(entries => {
@@ -165,7 +154,6 @@ export default function Hero() {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
       io.disconnect();
-      playing?.kill();
       tl.kill();
     };
   }, []);
@@ -305,7 +293,7 @@ export default function Hero() {
           onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(0,212,170,0.9)'; b.style.transform = 'translateY(0)'; }}
           >Sail the Ocean ··</button>
 
-          <button onClick={() => playRef.current()} style={{
+          <button onClick={() => setTrailerOpen(true)} aria-haspopup="dialog" style={{
             fontFamily: 'monospace', fontSize: '0.44rem',
             letterSpacing: '0.2em', textTransform: 'uppercase',
             padding: '0.55rem 1rem', borderRadius: '30px',
@@ -331,8 +319,8 @@ export default function Hero() {
         zIndex: 6,
       }}>
         {/* Play */}
-        <div role="button" tabIndex={0} onClick={() => playRef.current()}
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playRef.current(); } }}
+        <div role="button" tabIndex={0} aria-haspopup="dialog" onClick={() => setTrailerOpen(true)}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTrailerOpen(true); } }}
           style={{
           display: 'flex', alignItems: 'center', gap: '0.6rem',
           paddingRight: 'clamp(1rem, 2.5vw, 2rem)',
@@ -393,6 +381,45 @@ export default function Hero() {
           ))}
         </div>
       </div>
+
+      {/* ── TRAILER ── */}
+      {trailerOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Moana official trailer" onClick={() => setTrailerOpen(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 40,
+          background: 'rgba(2,14,26,0.94)', backdropFilter: 'blur(18px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: '1rem',
+          padding: 'clamp(3.6rem, 9vh, 5rem) clamp(1rem, 4vw, 3rem) clamp(1rem, 4vh, 3rem)',
+        }}>
+          <button autoFocus onClick={() => setTrailerOpen(false)} aria-label="Close trailer" style={{
+            position: 'absolute', top: '1rem', right: '1.2rem',
+            width: '40px', height: '40px', borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.25)', background: 'transparent',
+            color: '#fff', fontSize: '1rem', cursor: 'pointer',
+          }}>✕</button>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: 'min(100%, calc((100vh - 12rem) * 16 / 9))', aspectRatio: '16 / 9',
+            borderRadius: '14px', overflow: 'hidden', background: '#000',
+            boxShadow: '0 30px 90px rgba(0,0,0,0.7)',
+          }}>
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${TRAILER_ID}?autoplay=1&rel=0`}
+              title="Moana Official Trailer (Walt Disney Animation Studios)"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+            />
+          </div>
+          {/* Fallback in case the embedded player is blocked or fails to load */}
+          <a href={`https://www.youtube.com/watch?v=${TRAILER_ID}`} target="_blank" rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()} style={{
+              fontFamily: 'monospace', fontSize: '0.7rem', letterSpacing: '0.2em',
+              textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)',
+              textDecoration: 'underline', textUnderlineOffset: '4px',
+            }}>Watch on YouTube ↗</a>
+        </div>
+      )}
 
       {/* ── MENU OVERLAY ── */}
       {menuOpen && (
