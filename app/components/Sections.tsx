@@ -170,7 +170,10 @@ export default function Sections() {
         fontFamily: 'monospace', fontSize: '0.65rem', letterSpacing: '0.25em',
         textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)',
       }}>
-        The ocean is calling
+        <p>The ocean is calling</p>
+        <p style={{ marginTop: '0.8rem', letterSpacing: '0.12em', textTransform: 'none' }}>
+          Fan-made practice project. Not affiliated with or endorsed by Disney.
+        </p>
       </footer>
 
       {/* ── LIGHTBOX ── */}

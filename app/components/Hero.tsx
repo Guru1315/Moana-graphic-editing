@@ -9,6 +9,14 @@ const MIDDLE      = Math.round((FRAME_COUNT - 1) / 2);
 
 const NAV = ['Home', 'Journey', 'Gallery', 'Characters'];
 
+// No official accounts are linked: each opens the platform's public Moana tag or search page
+const SOCIAL = [
+  { s: 'IG', name: 'Instagram', href: 'https://www.instagram.com/explore/tags/moana/' },
+  { s: 'TW', name: 'X',         href: 'https://x.com/hashtag/moana' },
+  { s: 'YT', name: 'YouTube',   href: 'https://www.youtube.com/results?search_query=moana+trailer' },
+  { s: 'FB', name: 'Facebook',  href: 'https://www.facebook.com/hashtag/moana' },
+];
+
 const goTo = (label: string) =>
   document.getElementById(label.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
 
@@ -22,6 +30,14 @@ export default function Hero() {
   const bottomRef  = useRef<HTMLDivElement>(null);
   const playRef    = useRef<() => void>(() => {});
   const [active, setActive] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   useEffect(() => {
     const canvas  = canvasRef.current;
@@ -173,20 +189,20 @@ export default function Hero() {
 
         {/* Menu */}
         <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-          <button style={{
+          <button onClick={() => setMenuOpen(true)} aria-haspopup="dialog" aria-expanded={menuOpen} style={{
             fontFamily: 'monospace', fontSize: '0.42rem', letterSpacing: '0.2em',
             textTransform: 'uppercase', padding: '0.28rem 0.75rem', borderRadius: '30px',
             border: '1px solid rgba(255,255,255,0.14)',
             background: 'rgba(2,14,26,0.5)', backdropFilter: 'blur(12px)',
             color: 'rgba(255,255,255,0.55)', cursor: 'pointer',
           }}>Menu</button>
-          <button style={{
+          <button onClick={() => goTo('Home')} aria-label="Back to top" title="Back to top" style={{
             width: '24px', height: '24px', borderRadius: '50%',
             border: '1px solid rgba(255,255,255,0.14)',
             background: 'rgba(2,14,26,0.5)', backdropFilter: 'blur(12px)',
             color: 'rgba(255,255,255,0.45)', cursor: 'pointer',
             fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>··</button>
+          }}>↑</button>
         </div>
       </div>
 
@@ -309,8 +325,10 @@ export default function Hero() {
           paddingLeft: 'clamp(1rem, 2.5vw, 2rem)',
           borderLeft: '1px solid rgba(255,255,255,0.08)', flexShrink: 0,
         }}>
-          {['IG', 'TW', 'YT', 'FB'].map(s => (
-            <button key={s} style={{
+          {SOCIAL.map(({ s, name, href }) => (
+            <a key={s} href={href} target="_blank" rel="noopener noreferrer"
+              aria-label={`Moana on ${name} (opens in a new tab)`} title={name} style={{
+              textDecoration: 'none',
               width: '26px', height: '26px', borderRadius: '50%',
               border: '1px solid rgba(255,255,255,0.12)',
               background: 'transparent', color: 'rgba(255,255,255,0.4)',
@@ -318,12 +336,41 @@ export default function Hero() {
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'border-color 0.2s, color 0.2s',
             }}
-            onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'rgba(0,212,170,0.6)'; b.style.color = 'rgba(0,212,170,0.9)'; }}
-            onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'rgba(255,255,255,0.12)'; b.style.color = 'rgba(255,255,255,0.4)'; }}
-            >{s}</button>
+            onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(0,212,170,0.6)'; b.style.color = 'rgba(0,212,170,0.9)'; }}
+            onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = 'rgba(255,255,255,0.12)'; b.style.color = 'rgba(255,255,255,0.4)'; }}
+            >{s}</a>
           ))}
         </div>
       </div>
+
+      {/* ── MENU OVERLAY ── */}
+      {menuOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Menu" onClick={() => setMenuOpen(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 40,
+          background: 'rgba(2,14,26,0.94)', backdropFilter: 'blur(18px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 'clamp(1rem, 3vh, 1.8rem)',
+        }}>
+          <button autoFocus onClick={() => setMenuOpen(false)} aria-label="Close menu" style={{
+            position: 'absolute', top: '1.2rem', right: '1.4rem',
+            width: '40px', height: '40px', borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.25)', background: 'transparent',
+            color: '#fff', fontSize: '1rem', cursor: 'pointer',
+          }}>✕</button>
+          {NAV.map((label, i) => (
+            <button key={label} onClick={() => { setMenuOpen(false); goTo(label); }} style={{
+              fontFamily: 'Georgia, serif', fontSize: 'clamp(1.8rem, 5vw, 3.2rem)',
+              fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase',
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: i === active ? 'rgba(0,212,170,0.95)' : 'rgba(255,255,255,0.75)',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = i === active ? 'rgba(0,212,170,0.95)' : 'rgba(255,255,255,0.75)'; }}
+            >{label}</button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
