@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 
 const FRAME_COUNT = 181;
@@ -8,6 +8,9 @@ const FOLDER      = 'moana';
 const MIDDLE      = Math.round((FRAME_COUNT - 1) / 2);
 
 const NAV = ['Home', 'Journey', 'Gallery', 'Characters'];
+
+const goTo = (label: string) =>
+  document.getElementById(label.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -17,6 +20,8 @@ export default function Hero() {
   const navRef     = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const bottomRef  = useRef<HTMLDivElement>(null);
+  const playRef    = useRef<() => void>(() => {});
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const canvas  = canvasRef.current;
@@ -58,8 +63,9 @@ export default function Hero() {
     }
 
     // Window-level listener so nav/overlay elements never block events
+    let playing: gsap.core.Tween | null = null;
     const onMove = (e: MouseEvent) => {
-      if (!section) return;
+      if (!section || playing) return;
       const r = section.getBoundingClientRect();
       if (e.clientY < r.top || e.clientY > r.bottom) return;
       const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
@@ -67,6 +73,30 @@ export default function Hero() {
       if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
     };
     window.addEventListener('mousemove', onMove);
+
+    // "Trailer": play the whole frame sequence once, then hand control back to the mouse
+    playRef.current = () => {
+      playing?.kill();
+      const state = { f: 0 };
+      playing = gsap.to(state, {
+        f: FRAME_COUNT - 1, duration: FRAME_COUNT / 30, ease: 'none',
+        onUpdate: () => {
+          const idx = Math.round(state.f);
+          if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
+        },
+        onComplete: () => { playing = null; },
+      });
+    };
+
+    // Highlight the nav item for whichever section crosses the middle of the viewport
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const i = NAV.findIndex(l => l.toLowerCase() === e.target.id);
+        if (i >= 0) setActive(i);
+      });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+    NAV.forEach(l => { const el = document.getElementById(l.toLowerCase()); if (el) io.observe(el); });
 
     // Entrance animations
     const tl = gsap.timeline({ delay: 0.1 });
@@ -77,6 +107,9 @@ export default function Hero() {
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMove);
+      io.disconnect();
+      playing?.kill();
+      tl.kill();
     };
   }, []);
 
@@ -100,10 +133,11 @@ export default function Hero() {
 
       {/* ── NAV ── */}
       <div ref={navRef} style={{
-        position: 'absolute', top: 0, left: 0, right: 0, opacity: 0,
+        position: 'fixed', top: 0, left: 0, right: 0, opacity: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'linear-gradient(180deg, rgba(2,14,26,0.8) 0%, rgba(2,14,26,0) 100%)',
         padding: 'clamp(1rem, 2.5vh, 1.6rem) clamp(1.2rem, 4vw, 2.8rem)',
-        zIndex: 10,
+        zIndex: 20,
       }}>
         {/* Logo */}
         <span style={{
@@ -122,17 +156,17 @@ export default function Hero() {
           borderRadius: '40px', padding: '0.16rem 0.2rem',
         }}>
           {NAV.map((label, i) => (
-            <button key={label} style={{
+            <button key={label} onClick={() => goTo(label)} aria-current={i === active ? 'page' : undefined} style={{
               fontFamily: 'monospace', fontSize: '0.42rem',
               letterSpacing: '0.18em', textTransform: 'uppercase',
               padding: '0.24rem 0.65rem', borderRadius: '30px', border: 'none',
               cursor: 'pointer',
-              background: i === 0 ? 'rgba(255,255,255,0.88)' : 'transparent',
-              color: i === 0 ? '#020e1a' : 'rgba(255,255,255,0.52)',
-              fontWeight: i === 0 ? 700 : 400, transition: 'color 0.2s',
+              background: i === active ? 'rgba(255,255,255,0.88)' : 'transparent',
+              color: i === active ? '#020e1a' : 'rgba(255,255,255,0.52)',
+              fontWeight: i === active ? 700 : 400, transition: 'color 0.2s, background 0.2s',
             }}
-            onMouseEnter={e => { if (i !== 0) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-            onMouseLeave={e => { if (i !== 0) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.52)'; }}
+            onMouseEnter={e => { if (i !== active) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+            onMouseLeave={e => { if (i !== active) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.52)'; }}
             >{label}</button>
           ))}
         </div>
@@ -191,7 +225,7 @@ export default function Hero() {
         </p>
 
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <button style={{
+          <button onClick={() => goTo('Journey')} style={{
             fontFamily: 'monospace', fontSize: '0.44rem',
             letterSpacing: '0.2em', textTransform: 'uppercase',
             padding: '0.55rem 1.1rem', borderRadius: '30px', border: 'none',
@@ -204,7 +238,7 @@ export default function Hero() {
           onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(0,212,170,0.9)'; b.style.transform = 'translateY(0)'; }}
           >Sail the Ocean ··</button>
 
-          <button style={{
+          <button onClick={() => playRef.current()} style={{
             fontFamily: 'monospace', fontSize: '0.44rem',
             letterSpacing: '0.2em', textTransform: 'uppercase',
             padding: '0.55rem 1rem', borderRadius: '30px',
@@ -230,7 +264,9 @@ export default function Hero() {
         zIndex: 6,
       }}>
         {/* Play */}
-        <div style={{
+        <div role="button" tabIndex={0} onClick={() => playRef.current()}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playRef.current(); } }}
+          style={{
           display: 'flex', alignItems: 'center', gap: '0.6rem',
           paddingRight: 'clamp(1rem, 2.5vw, 2rem)',
           borderRight: '1px solid rgba(255,255,255,0.08)',
