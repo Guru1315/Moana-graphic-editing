@@ -26,6 +26,9 @@ html, body {
 .character-card { transition: border-color 0.25s, transform 0.25s, background 0.25s; }
 .character-card:hover { border-color: rgba(0,212,170,0.45); transform: translateY(-4px); background: rgba(255,255,255,0.05); }
 
+.touch-hint { display: none; }
+@media (hover: none) and (pointer: coarse) { .touch-hint { display: block; } }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }

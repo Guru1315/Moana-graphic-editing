@@ -68,12 +68,16 @@ export default function Hero() {
 
     images.current = new Array(FRAME_COUNT).fill(null);
     let ready = false;
+    let interacted = false; // set once the pointer, a touch drag or the trailer picks a frame
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.src = `/${FOLDER}/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
       img.onload = () => {
         images.current[i] = img;
+        // Show the first frame that arrives, then settle on the middle frame (facing the
+        // viewer) so a drag can go either way, unless the user has already chosen one.
         if (!ready) { ready = true; frameRef.current = i; draw(i); }
+        if (i === MIDDLE && !interacted) frameRef.current = MIDDLE;
         if (i === frameRef.current) draw(i);
       };
     }
@@ -86,13 +90,46 @@ export default function Hero() {
       if (e.clientY < r.top || e.clientY > r.bottom) return;
       const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
       const idx   = Math.round(ratio * (FRAME_COUNT - 1));
+      interacted = true;
       if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
     };
     window.addEventListener('mousemove', onMove);
 
+    // Touch: a horizontal drag across the hero scrubs the frames, relative to where the
+    // drag started. Vertical drags are left alone so the page still scrolls.
+    let touch: { x: number; y: number; frame: number; scrub: boolean | null } | null = null;
+    const onTouchStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (!section || playing || e.touches.length !== 1) { touch = null; return; }
+      const r = section.getBoundingClientRect();
+      if (t.clientY < r.top || t.clientY > r.bottom) { touch = null; return; }
+      touch = { x: t.clientX, y: t.clientY, frame: frameRef.current, scrub: null };
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touch || !section || playing) return;
+      const t  = e.touches[0];
+      const dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+      if (touch.scrub === null) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        touch.scrub = Math.abs(dx) > Math.abs(dy);
+      }
+      if (!touch.scrub) return;
+      interacted = true;
+      // One swipe across the full width covers the whole sequence
+      const step = (dx / section.clientWidth) * (FRAME_COUNT - 1);
+      const idx  = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(touch.frame + step)));
+      if (idx !== frameRef.current) { frameRef.current = idx; draw(idx); }
+    };
+    const onTouchEnd = () => { touch = null; };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd);
+    window.addEventListener('touchcancel', onTouchEnd);
+
     // "Trailer": play the whole frame sequence once, then hand control back to the mouse
     playRef.current = () => {
       playing?.kill();
+      interacted = true;
       const state = { f: 0 };
       playing = gsap.to(state, {
         f: FRAME_COUNT - 1, duration: FRAME_COUNT / 30, ease: 'none',
@@ -123,6 +160,10 @@ export default function Hero() {
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
       io.disconnect();
       playing?.kill();
       tl.kill();
@@ -133,6 +174,7 @@ export default function Hero() {
     <section ref={sectionRef} style={{
       position: 'relative', height: '100vh', width: '100%',
       overflow: 'hidden', background: '#020e1a',
+      touchAction: 'pan-y',
     }}>
 
       {/* Full-viewport head-tracking canvas */}
@@ -146,6 +188,15 @@ export default function Hero() {
           'linear-gradient(180deg, rgba(2,14,26,0.6) 0%, transparent 14%, transparent 80%, rgba(2,14,26,0.85) 100%)',
         ].join(', '),
       }} />
+
+      {/* Shown only on touch devices (see globals.css) */}
+      <p className="touch-hint" aria-hidden style={{
+        position: 'absolute', left: 0, right: 0, textAlign: 'center',
+        bottom: 'calc(clamp(50px, 7.5vh, 66px) + 0.9rem)', zIndex: 4, pointerEvents: 'none',
+        fontFamily: 'monospace', fontSize: '0.62rem', letterSpacing: '0.3em',
+        textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)',
+        textShadow: '0 1px 8px rgba(0,0,0,0.8)',
+      }}>← Drag to turn →</p>
 
       {/* ── NAV ── */}
       <div ref={navRef} style={{
